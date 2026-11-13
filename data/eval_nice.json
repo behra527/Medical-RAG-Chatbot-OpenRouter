@@ -1,0 +1,13 @@
+[
+  {"question":"How should hypertension be confirmed when clinic blood pressure is between 140/90 and 180/120 mmHg?", "gold_document":"NICE NG136", "gold_section":"1.2", "expected_terms":["ABPM"]},
+  {"question":"What does NICE recommend if ABPM is unsuitable or the patient cannot tolerate it?", "gold_document":"NICE NG136", "gold_section":"1.2", "expected_terms":["HBPM"]},
+  {"question":"When measuring blood pressure in both arms, what should be done if the difference remains over 15 mmHg?", "gold_document":"NICE NG136", "gold_section":"1.2", "expected_terms":["higher"]},
+  {"question":"What systolic and diastolic blood pressure drops indicate postural hypotension according to NICE?", "gold_document":"NICE NG136", "gold_section":"1.1", "expected_terms":["20", "10"]},
+  {"question":"What is the NICE ABPM or HBPM treatment target for adults aged under 80?", "gold_document":"NICE NG136", "gold_section":"1.4", "expected_terms":["135/85"]},
+  {"question":"What is the NICE ABPM or HBPM treatment target for adults aged 80 and over?", "gold_document":"NICE NG136", "gold_section":"1.4", "expected_terms":["145/85"]},
+  {"question":"Does NICE recommend measuring blood pressure manually if an irregular pulse is detected?", "gold_document":"NICE NG136", "gold_section":"1.1", "expected_terms":["manual"]},
+  {"question":"What does NICE say about advice on healthy living for raised blood pressure without hypertension?", "gold_document":"NICE NG136", "gold_section":"1.2", "expected_terms":["healthy living"]},
+  {"question":"What pediatric tuberculosis antibiotic regimen does this hypertension guideline recommend?", "should_abstain":true},
+  {"question":"What chemotherapy protocol is recommended for childhood leukemia?", "should_abstain":true},
+  {"question":"How should I change my car engine oil?", "should_abstain":true}
+]
