@@ -1,146 +1,1117 @@
-# Veritas Health — Premium Medical RAG SaaS-Style Prototype (v2)
 
-A clean, responsive clinical guideline question-answering application built on the existing FastAPI/OpenRouter RAG backend, with a **new dependency-free premium web frontend** served from the FastAPI root URL.
+# 🏥 Veritas Health  Medical RAG Chatbot
 
-> **Clinical boundary:** This is an educational guideline research application. It is **not a clinically validated medical device**, and it is not ready for unsupervised diagnosis, prescribing or other clinical decisions. Avoid entering identifiable patient information. A qualified clinician must check answers and sources.
+### Advanced Clinical Guideline Intelligence Powered by OpenRouter
 
-## New in v2
+**An AI-powered medical question-answering system using Retrieval-Augmented Generation (RAG), clinical guideline documents, semantic search, and evidence-based response generation.**
 
-- **Fixes “Not Found” at `/`:** `http://127.0.0.1:8000/` now serves the actual application. The older optional Streamlit interface remains at `ui/streamlit_app.py` (install `requirements-streamlit.txt` to run it), but it is not the premium UI.
-- **Premium web frontend:** responsive sidebar, evidence-first chat, suggested questions, conversation export, citation cards, original PDF viewer, document library, source search, evaluation dashboard, admin setup, health indicators, proper empty states and helpful/not-helpful feedback.
-- **Authenticated administrative actions:** upload, delete, trusted publisher import, evaluation and feedback statistics require `X-Admin-Key` when `ADMIN_API_KEY` is configured. Production mode refuses admin actions without a configured key.
-- **Official publisher catalogue:** WHO hypertension 2021 and NICE NG136 2026, with original publisher links, rights notices, and **one-click download + indexing** after authorized admin confirmation.
-- **Preserved original PDFs:** local `data/guidelines/<sha256-id>.pdf` files allow citations to open PDF page `#page=N`. The page is the 1-based PDF page number; section headings come from text extraction and must be verified.
-- **RAG backbone preserved:** chunking, OpenRouter embeddings, cosine similarity, SQLite FTS5 lexical search, reciprocal-rank fusion, relevance gate, grounding prompt, citation ID verification, retrieval and answer evaluation.
+Veritas Health is a medical RAG application built with **Python, FastAPI, OpenRouter, and a modern SaaS-style web interface**. It retrieves relevant information from clinical guidelines and generates answers supported by document citations, PDF page numbers, and section references.
 
-## 1. One-time setup — Windows PowerShell
+The system is designed to reduce unsupported answers by grounding responses in retrieved clinical evidence.
 
-**Recommended Python:** 3.11 (standard build, not Python 3.13 free-threading). Check installation:
+> **Medical Disclaimer:** This project is intended for educational purposes, clinical guideline research, and AI experimentation. It is not a clinically validated medical device and should not be used for independent diagnosis, treatment, or prescribing decisions. Always consult a qualified healthcare professional.
 
-```powershell
-py -0p
-py -3.11 --version
+
+
+##  Table of Contents
+
+1. [Project Overview](#-project-overview)
+2. [Key Features](#-key-features)
+3. [Technology Stack](#-technology-stack)
+4. [System Architecture](#-system-architecture)
+5. [RAG Pipeline](#-rag-pipeline)
+6. [Document Processing Workflow](#-document-processing-workflow)
+7. [Medical Question Answering Workflow](#-medical-question-answering-workflow)
+8. [Project Structure](#-project-structure)
+9. [Installation and Setup](#-installation-and-setup)
+10. [OpenRouter Configuration](#-openrouter-configuration)
+11. [Knowledge Base Management](#-knowledge-base-management)
+12. [Example Questions](#-example-questions)
+13. [API Endpoints](#-api-endpoints)
+14. [Evaluation and Testing](#-evaluation-and-testing)
+15. [Results](#-results)
+16. [Security and Privacy](#-security-and-privacy)
+17. [Limitations](#-limitations)
+18. [Future Improvements](#-future-improvements)
+19. [Troubleshooting](#-troubleshooting)
+20. [Conclusion](#-conclusion)
+
+
+
+##  Project Overview
+
+Medical information must be accurate, reliable, and supported by trustworthy sources. Traditional Large Language Models (LLMs) can generate convincing answers even when the information is incorrect or outdated.
+
+To address this challenge, I developed **Veritas Health**, a Retrieval-Augmented Generation chatbot that answers medical questions using indexed clinical guideline documents.
+
+Instead of relying entirely on the LLM's general knowledge, the system retrieves relevant passages from its knowledge base and uses those passages to generate evidence-based responses.
+
+### Project Objectives
+
+The main objectives of this project are:
+
+- Develop an advanced medical RAG chatbot.
+- Extract and process information from clinical guideline PDFs.
+- Implement text chunking and embedding generation.
+- Perform semantic similarity search.
+- Combine vector retrieval with keyword-based search.
+- Generate medical answers using OpenRouter.
+- Provide source citations with PDF page numbers.
+- Avoid unsupported answers through relevance thresholds.
+- Handle empty, invalid, and out-of-scope questions.
+- Build a professional and user-friendly web interface.
+- Evaluate retrieval accuracy, answer quality, and response time.
+
+The application also includes knowledge-base management, administrator controls, and an evaluation workflow.
+
+
+
+##  Key Features
+
+### 1. Medical RAG Chatbot
+
+An AI-powered chatbot that generates answers using relevant clinical guideline passages.
+
+- Evidence-based question answering
+- Context-aware response generation
+- OpenRouter LLM integration
+- English and Urdu question support
+- Source-aware answers
+- Conversation interface
+- Suggested medical questions
+
+### 2. Clinical Document Processing
+
+The system processes medical guideline documents in PDF format.
+
+- PDF upload and processing
+- Page-by-page text extraction
+- Text chunking with overlap
+- Section metadata extraction
+- Document source tracking
+- Persistent knowledge-base indexing
+
+### 3. Semantic Search and Retrieval
+
+Relevant clinical information is retrieved using semantic similarity and lexical matching.
+
+- OpenRouter embedding generation
+- Cosine similarity search
+- SQLite vector storage
+- SQLite FTS5 keyword search
+- BM25-based lexical ranking
+- Reciprocal Rank Fusion (RRF)
+- Top-K passage retrieval
+- Relevance threshold filtering
+
+### 4. Transparent Source Citations
+
+Generated answers include references to their supporting evidence.
+
+- Clinical guideline title
+- PDF page number
+- Section reference when available
+- Supporting source passages
+- Citation identifiers
+- Original PDF viewing
+
+Citation metadata is taken from indexed documents rather than invented by the language model.
+
+### 5. Intelligent Fallback Handling
+
+When relevant evidence is unavailable, the system returns a fallback response.
+
+Example:
+
+> I could not find sufficiently relevant evidence in the uploaded clinical guidelines. Please consult a qualified healthcare professional or upload a relevant, current guideline.
+
+This helps prevent unsupported medical recommendations.
+
+### 6. Premium SaaS-Style Frontend
+
+The application includes a responsive web interface designed for a smooth user experience.
+
+**Main interface features:**
+
+- Medical AI assistant
+- Clinical guideline library
+- Document search and browsing
+- Evidence citation cards
+- Original PDF viewer
+- Administrator access
+- Evaluation dashboard
+- System health indicators
+- Conversation export
+- Helpful / Not Helpful feedback
+- Responsive layout
+
+### 7. Administrator Controls
+
+Administrators can manage the clinical knowledge base.
+
+- Upload guideline PDFs
+- Import authorized publisher documents
+- Delete indexed documents
+- Run evaluations
+- Access feedback statistics
+- Manage document indexing
+
+Administrative operations are protected using an administrator API key.
+
+
+
+##  Technology Stack
+
+| Component | Technology |
+|---|---|
+| Programming Language | Python |
+| Backend Framework | FastAPI |
+| ASGI Server | Uvicorn |
+| AI Model Gateway | OpenRouter |
+| Chat Model | GPT-4o Mini via OpenRouter |
+| Embedding Model | text-embedding-3-small via OpenRouter |
+| Document Processing | PyMuPDF |
+| Vector Similarity | Cosine Similarity |
+| Lexical Retrieval | SQLite FTS5 / BM25 |
+| Hybrid Ranking | Reciprocal Rank Fusion |
+| Database | SQLite |
+| Frontend | HTML, CSS, JavaScript |
+| API Communication | REST / JSON |
+| Testing | Pytest |
+| API Documentation | Swagger UI |
+| Operating System | Windows / Linux |
+
+The chat and embedding models can be changed through the application's configuration, provided the selected models are supported by OpenRouter.
+
+
+
+## System Architecture
+
+The application follows a modular architecture consisting of the frontend, FastAPI backend, document processing pipeline, retrieval engine, and OpenRouter LLM integration.
+
+### High-Level Architecture Diagram
+
+```mermaid
+flowchart TD
+    U["User / Administrator"]
+
+    UI["Premium Web Frontend<br/>HTML, CSS, JavaScript"]
+
+    API["FastAPI Backend<br/>REST API"]
+
+    DOC["Document Management<br/>PDF Upload / Import"]
+
+    RAG["RAG Engine<br/>Retrieval and Generation"]
+
+    PDF["PDF Processing<br/>Text Extraction and Chunking"]
+
+    EMB["OpenRouter<br/>Embedding API"]
+
+    DB[("SQLite Database<br/>Vectors + FTS5")]
+
+    SEARCH["Hybrid Search<br/>Cosine + BM25 + RRF"]
+
+    LLM["OpenRouter<br/>Chat Completion API"]
+
+    ANS["Evidence-Based Answer<br/>Citations + Page Numbers"]
+
+    U --> UI
+    UI --> API
+
+    API --> DOC
+    API --> RAG
+
+    DOC --> PDF
+    PDF --> EMB
+    EMB --> DB
+
+    RAG --> SEARCH
+    SEARCH --> DB
+    SEARCH --> LLM
+
+    LLM --> ANS
+    ANS --> API
+    API --> UI
+
+    style UI fill:#dbeafe,stroke:#2563eb,color:#111827
+    style API fill:#dcfce7,stroke:#16a34a,color:#111827
+    style DB fill:#fef3c7,stroke:#d97706,color:#111827
+    style LLM fill:#ede9fe,stroke:#7c3aed,color:#111827
+    style ANS fill:#dcfce7,stroke:#16a34a,color:#111827
 ```
 
-In the **extracted project root** (the folder containing `requirements.txt`):
+### Architecture Explanation
+
+The user interacts with the web frontend, which communicates with the FastAPI backend.
+
+The backend handles document management, retrieval requests, embedding generation, and LLM communication.
+
+Medical documents are processed and indexed into SQLite. When a question is submitted, the retrieval engine identifies relevant passages and passes them to OpenRouter for grounded answer generation.
+
+The final response is displayed with citations and source metadata.
+
+
+
+##  RAG Pipeline
+
+Retrieval-Augmented Generation combines information retrieval with language model generation.
+
+The system consists of two major processes:
+
+1. **Document Ingestion:** Preparing and indexing clinical guideline documents.
+2. **Query Processing:** Retrieving relevant passages and generating an answer.
+
+### Complete RAG Workflow
+
+```mermaid
+flowchart TD
+    A["Clinical Guideline PDF"]
+    B["PDF Text Extraction"]
+    C["Text Cleaning"]
+    D["Chunking + Metadata"]
+    E["Embedding Generation"]
+    F[("Vector and Text Index")]
+
+    G["Medical Question"]
+    H["Query Embedding"]
+    I["Hybrid Retrieval"]
+    J["Relevance Filtering"]
+    K{"Relevant Evidence?"}
+
+    L["OpenRouter LLM"]
+    M["Answer with Citations"]
+    N["Fallback Response"]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+
+    G --> H
+    H --> I
+    F --> I
+
+    I --> J
+    J --> K
+
+    K -->|Yes| L
+    K -->|No| N
+
+    L --> M
+
+    style F fill:#dbeafe,stroke:#2563eb,color:#111827
+    style K fill:#fef3c7,stroke:#d97706,color:#111827
+    style M fill:#dcfce7,stroke:#16a34a,color:#111827
+    style N fill:#fee2e2,stroke:#dc2626,color:#111827
+```
+
+
+
+##  Document Processing Workflow
+
+The knowledge base stores clinical guideline documents that are used to support the chatbot's answers.
+
+### Step 1  PDF Upload
+
+An administrator uploads an authorized PDF or imports a document from the official publisher catalogue.
+
+The application validates and processes the document before indexing.
+
+### Step 2  Text Extraction
+
+PyMuPDF extracts text from the PDF page by page.
+
+Each extracted passage is associated with information such as:
+
+- Document title
+- Source URL
+- PDF page number
+- Section heading when detectable
+- Text content
+
+### Step 3  Text Chunking
+
+Large documents are split into smaller passages.
+
+Chunking helps the retrieval system locate specific information without searching or sending the complete document to the LLM.
+
+Overlapping chunks help preserve context between adjacent passages.
+
+### Step 4  Embedding Generation
+
+Each text chunk is converted into a numerical embedding using OpenRouter.
+
+Embeddings represent text in vector form, allowing the system to compare semantic meaning.
+
+### Step 5 Database Storage
+
+The system stores searchable embeddings and document metadata in SQLite.
+
+A separate SQLite FTS5 index supports keyword-based retrieval.
+
+### Document Indexing Diagram
+
+```mermaid
+flowchart LR
+    A["PDF Document"]
+    B["Extract Text"]
+    C["Create Chunks"]
+    D["Generate Embeddings"]
+    E[("SQLite Index")]
+
+    A --> B --> C --> D --> E
+```
+
+
+
+##  Medical Question Answering Workflow
+
+When a user asks a medical question, the system performs the following steps.
+
+### Step 1  Query Validation
+
+The system checks whether the user has entered a meaningful question.
+
+Empty or invalid queries are handled before invoking the retrieval pipeline.
+
+### Step 2 Query Embedding
+
+The question is converted into an embedding using the same embedding model used for indexed documents.
+
+### Step 3  Similarity Search
+
+The query embedding is compared with stored chunk embeddings using cosine similarity.
+
+The application also performs keyword retrieval using SQLite FTS5.
+
+### Step 4 Hybrid Retrieval
+
+Semantic and lexical search results are combined through Reciprocal Rank Fusion.
+
+This improves the ability to retrieve relevant passages when wording differs between the question and the guideline.
+
+### Step 5 Relevance Filtering
+
+The system applies relevance checks to determine whether there is enough evidence to answer.
+
+If the evidence is insufficient, the chatbot returns a fallback response.
+
+### Step 6  OpenRouter Answer Generation
+
+Relevant passages are sent to the selected OpenRouter chat model with a grounding prompt.
+
+The model is instructed to answer using the supplied evidence rather than unsupported assumptions.
+
+### Step 7  Citation Verification
+
+The generated answer is checked against available citation identifiers.
+
+Source references are associated with indexed document metadata.
+
+### Step 8  Final Response
+
+The frontend displays:
+
+- Generated answer
+- Supporting evidence
+- Source document
+- PDF page numbers
+- Section references
+- Links to the source PDF
+
+### Question Processing Diagram
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant UI as Web Frontend
+    participant API as FastAPI
+    participant RET as Retrieval Engine
+    participant DB as SQLite
+    participant OR as OpenRouter
+
+    User->>UI: Submit medical question
+    UI->>API: POST /chat
+
+    API->>API: Validate query
+
+    API->>OR: Generate query embedding
+    OR-->>API: Query vector
+
+    API->>RET: Retrieve relevant evidence
+    RET->>DB: Semantic and keyword search
+    DB-->>RET: Candidate passages
+
+    RET->>RET: Rank and filter evidence
+    RET-->>API: Relevant passages
+
+    alt Sufficient evidence
+        API->>OR: Generate grounded answer
+        OR-->>API: Answer with citation IDs
+        API->>API: Validate citations
+        API-->>UI: Answer and source evidence
+    else Insufficient evidence
+        API-->>UI: Safe fallback response
+    end
+
+    UI-->>User: Display result
+```
+
+
+
+##  Project Structure
+
+The following shows the key project directories and components.
+
+```text
+Medical-RAG-Chatbot-OpenRouter/
+│
+├── app/
+│   ├── api.py
+│   └── ...
+│
+├── ui/
+│   ├── web/
+│   │   ├── index.html
+│   │   └── assets/
+│   │       ├── styles.css
+│   │       └── app.js
+│   │
+│   └── streamlit_app.py
+│
+├── data/
+│   ├── guidelines/
+│   └── eval_nice.json
+│
+├── scripts/
+│   ├── bootstrap_guidelines.py
+│   └── evaluate.py
+│
+├── tests/
+│
+├── requirements.txt
+├── requirements-streamlit.txt
+├── .env.example
+├── start_windows.bat
+└── README.md
+```
+
+The `app/` directory contains the backend and RAG implementation.
+
+The `ui/` directory contains the web interface and optional Streamlit frontend.
+
+The `data/` directory is used for guideline storage and evaluation resources.
+
+The `scripts/` directory contains command-line utilities for importing guidelines and evaluating the system.
+
+The `tests/` directory contains automated tests.
+
+
+
+##  Installation and Setup
+
+### Prerequisites
+
+Before running the project, make sure the following are available:
+
+- Python 3.11
+- Git
+- Internet connection
+- OpenRouter account
+- OpenRouter API key
+- VS Code or another code editor
+
+### Step 1 — Clone the Repository
+
+```bash
+git clone https://github.com/behra527/Medical-RAG-Chatbot-OpenRouter.git
+```
+
+Open the project directory:
+
+```bash
+cd Medical-RAG-Chatbot-OpenRouter
+```
+
+### Step 2 — Create Virtual Environment
+
+For Windows PowerShell:
 
 ```powershell
 py -3.11 -m venv .venv
+```
+
+Activate the environment:
+
+```powershell
 .\.venv\Scripts\Activate.ps1
+```
+
+### Step 3 — Install Dependencies
+
+```powershell
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
+```
+
+### Step 4 — Configure Environment Variables
+
+Create the environment file:
+
+```powershell
 Copy-Item .env.example .env
+```
+
+Open it:
+
+```powershell
 notepad .env
 ```
 
-Replace the two placeholders in `.env` with your own secrets:
+Add the required values:
 
 ```dotenv
-OPENROUTER_API_KEY=your_real_openrouter_key
-ADMIN_API_KEY=a_unique_long_random_secret_only_you_know
+OPENROUTER_API_KEY=your_actual_openrouter_api_key
+ADMIN_API_KEY=your_secure_random_admin_key
 ```
 
-**Never embed OpenRouter keys in frontend code, post them in chat, or commit `.env` to Git.** The same OpenRouter key is used for the chat and embedding APIs, and both can incur cost. Default embedding model: `openai/text-embedding-3-small`; default chat model: `openai/gpt-4o-mini`.
+Keep the remaining settings from `.env.example` unless you need to customize them.
 
-### Start the whole application (one terminal)
+### Step 5 — Generate a Secure Admin Key
+
+You can generate a random administrator key using:
 
 ```powershell
-.\.venv\Scripts\Activate.ps1
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+Copy the generated value into `ADMIN_API_KEY`.
+
+Do not share this key publicly.
+
+### Step 6 — Start the Application
+
+```powershell
 python -m uvicorn app.api:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Or run `start_windows.bat` after installing dependencies and setting `.env`.
+### Step 7 — Open the Frontend
 
-- **Premium application:** http://127.0.0.1:8000/
-- **Swagger API:** http://127.0.0.1:8000/docs
-- **Health check:** http://127.0.0.1:8000/health
+**Application:**
 
-**You do not need to start Streamlit** for the premium application. The FastAPI service provides both the user interface and backend under one origin.
+http://127.0.0.1:8000/
 
-## 2. Populate the knowledge base with real guideline PDFs
+**API Documentation:**
 
-**Important:** This ZIP does not embed full copyrighted clinical guideline books. The runtime catalogue offers verified publisher URLs, and the administrator downloads/indices a PDF **after confirming content rights**. You need internet access and OpenRouter API credits; there is no fake pre-populated corpus or manufactured benchmark.
+http://127.0.0.1:8000/docs
 
-**Easy method using the web UI:**
+**Health Check:**
 
-1. Open the app at `http://127.0.0.1:8000/` and choose **Knowledge Library**.
-2. Under **Administrator access**, enter the same `ADMIN_API_KEY` stored on the backend. Select **Use key for this session**.
-3. In the **Official publisher catalogue**, select the WHO hypertension 2021 document. Read the licence notice. Only confirm and import if your use is lawful.
-4. The backend downloads the official PDF, extracts pages and sections, creates OpenRouter embeddings, saves its original PDF, and indexes passages into SQLite. **This can incur usage charges.**
-5. When indexed, the indicator becomes **Ready to answer**. Ask questions on the **AI Assistant** page. Citations contain verified source identifiers, PDF pages, section labels and supporting excerpts.
+http://127.0.0.1:8000/health
 
-**Command-line alternative** (also requires a rights confirmation):
+The premium frontend is served directly through FastAPI.
 
-```powershell
-python scripts/bootstrap_guidelines.py --guideline who-hypertension-2021 --confirm-rights
-```
+No separate Node.js frontend server is required.
 
-The NICE option is available **only if you have appropriate rights**:
+### Optional Streamlit Frontend
+
+The older Streamlit interface can be run separately if needed.
+
+Install the optional dependencies:
 
 ```powershell
-python scripts/bootstrap_guidelines.py --guideline nice-ng136-2026 --confirm-rights
+python -m pip install -r requirements-streamlit.txt
 ```
 
-You can also upload an authorized PDF in Knowledge Library and add its real title and HTTPS publisher source URL.
+Run:
 
-### Clinical content rights
+```powershell
+streamlit run ui/streamlit_app.py
+```
 
-- **WHO hypertension guideline (2021):** CC BY-NC-SA 3.0 IGO. Noncommercial use with attribution and share-alike obligations. **Do not assume this licence permits a commercial SaaS offering.** Commercial use needs WHO permission. See [WHO publication](https://www.who.int/publications/i/item/9789240033986).
-- **NICE NG136 (last updated February 2026):** UK Open Content Licence is UK-specific; NICE requires permission for many uses outside the UK beyond personal study/research. Do **not** commercially deploy worldwide without rights clearance. See [NICE terms](https://www.nice.org.uk/terms-and-conditions) and [NICE NG136](https://www.nice.org.uk/guidance/ng136).
-- The importer uses a fixed publisher URL allowlist. For commercial deployment, secure an appropriate medical guideline corpus licence first.
+The premium application does not require Streamlit.
 
-## 3. Questions to try
 
-For a hypertension guideline corpus, ask:
 
-- How does NICE recommend confirming hypertension for clinic BP between 140/90 and 180/120 mmHg?
-- What if ambulatory blood pressure monitoring is unsuitable?
-- What blood pressure targets are specified for adults aged 80 and over?
-- What drug classes does WHO recommend as initial pharmacological treatment for hypertension?
-- What follow-up intervals are recommended for blood pressure reassessment?
+##  OpenRouter Configuration
 
-**Out-of-scope fallback test:** “What is the standard chemotherapy for leukemia?” The assistant should explicitly abstain if it lacks suitable indexed sources, rather than fabricate citations.
+The system uses OpenRouter for embedding generation and LLM response generation.
 
-When no documents have been indexed, the UI gives a plain-language **setup required** message rather than claiming that the system is ready. When OpenRouter credentials or the upstream model are unavailable, a clear API error is shown to the user.
+### Supported Functions
 
-## 4. Run automated tests and evaluation
+**Embedding API**
+
+Transforms clinical guideline passages and user questions into embeddings for semantic search.
+
+**Chat Completions API**
+
+Generates natural-language answers using retrieved guideline passages.
+
+### Default Models
+
+| Purpose | Model |
+|---|---|
+| Embedding Generation | openai/text-embedding-3-small |
+| Answer Generation | openai/gpt-4o-mini |
+
+The models can be configured through the application's environment settings.
+
+### API Key Security
+
+Never:
+
+- Commit `.env` to GitHub.
+- Hardcode API keys in JavaScript.
+- Share API keys in screenshots.
+- Expose secret credentials to users.
+
+OpenRouter calls can incur charges depending on the selected models and usage.
+
+
+
+##  Knowledge Base Management
+
+The application uses real clinical guideline documents rather than a fabricated or hardcoded knowledge base.
+
+### Indexed Clinical Guideline
+
+The following guideline was indexed during development:
+
+| Field | Value |
+|---|---|
+| Publisher | National Institute for Health and Care Excellence |
+| Document | NG136 — Hypertension in adults |
+| Guideline Year | 2026 |
+| PDF Pages | 57 |
+| Searchable Passages | 108 |
+| Medical Domain | Hypertension |
+
+These counts reflect the observed development knowledge base and may differ after re-indexing or changing chunk settings.
+
+### How to Import Documents
+
+1. Open the application.
+2. Navigate to **Knowledge Library**.
+3. Enter the administrator API key.
+4. Select an authorized clinical guideline.
+5. Review the document licence.
+6. Import or upload the document.
+7. Wait for successful indexing.
+8. Verify the number of documents and passages.
+
+Once the guideline is indexed, the chatbot can retrieve its relevant passages.
+
+### Available Publisher Catalogue
+
+The prototype includes references to:
+
+**World Health Organization**
+
+Guideline for the pharmacological treatment of hypertension in adults (2021).
+
+https://www.who.int/publications/i/item/9789240033986
+
+**National Institute for Health and Care Excellence**
+
+NG136 — Hypertension in adults: diagnosis and management.
+
+https://www.nice.org.uk/guidance/ng136
+
+### Document Licensing
+
+The WHO guideline is published under a non-commercial licence, while NICE content is subject to publisher reuse conditions that may restrict use outside the United Kingdom or in commercial products.
+
+Before importing or distributing clinical content, verify that your intended use is permitted.
+
+Do not assume publicly downloadable PDFs can be freely redistributed in a commercial SaaS application.
+
+
+
+##  Example Questions
+
+After indexing an appropriate hypertension guideline, try these questions.
+
+### Basic Questions
+
+1. What is hypertension?
+2. How is hypertension diagnosed in adults?
+3. What is considered high blood pressure?
+4. What lifestyle changes help reduce blood pressure?
+5. What is ambulatory blood pressure monitoring?
+
+### Intermediate Questions
+
+6. What is the difference between stage 1 and stage 2 hypertension?
+7. How does NICE recommend confirming hypertension?
+8. What blood pressure targets are recommended for adults under 80?
+9. When should antihypertensive treatment be started?
+10. What investigations are recommended for newly diagnosed hypertension?
+
+### Advanced Questions
+
+11. What is the recommended first-line treatment for hypertension?
+12. How should resistant hypertension be managed?
+13. How does NICE recommend managing severe hypertension?
+14. What is the treatment approach for patients with type 2 diabetes?
+15. What are the blood pressure targets for adults aged 80 and older?
+
+### Citation Testing
+
+**Question:**
+
+How does NICE recommend confirming hypertension when clinic blood pressure is between 140/90 and 180/120 mmHg? Provide source citations, page numbers, and guideline section references.
+
+### Unsupported Question Testing
+
+**Question:**
+
+What chemotherapy treatment is recommended for stage 4 lung cancer?
+
+If the knowledge base contains only hypertension guidelines, the chatbot should abstain because the required clinical evidence is unavailable.
+
+
+
+##  API Endpoints
+
+FastAPI provides REST endpoints for the frontend and external integrations.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/` | Premium frontend |
+| GET | `/health` | Application health |
+| GET | `/documents` | List indexed documents |
+| GET | `/documents/{id}/pdf` | Open indexed PDF |
+| GET | `/api/catalog` | Official publisher catalogue |
+| POST | `/api/catalog/import` | Import authorized guideline |
+| POST | `/documents/upload` | Upload clinical PDF |
+| DELETE | `/documents/{id}` | Delete document |
+| POST | `/chat` | Generate RAG response |
+| POST | `/retrieve` | Retrieve relevant passages |
+| GET | `/api/system` | System information |
+| POST | `/api/feedback` | Submit response feedback |
+| POST | `/evaluation/run` | Run evaluation |
+
+Some endpoints require the administrator API key.
+
+### API Documentation
+
+Open Swagger UI:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+### Example Retrieval Request
+
+```powershell
+$body = @{
+    question = "How is hypertension diagnosed?"
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+    -Uri "http://127.0.0.1:8000/retrieve" `
+    -Method Post `
+    -ContentType "application/json" `
+    -Body $body
+```
+
+The retrieval API returns evidence according to the available indexed documents and configured relevance filters.
+
+---
+
+##  Evaluation and Testing
+
+The project includes an evaluation workflow to measure retrieval performance and answer quality.
+
+### Evaluation Objectives
+
+The evaluation covers:
+
+1. Retrieval accuracy
+2. Answer quality
+3. Citation correctness
+4. Response time
+5. Fallback behavior
+6. Invalid input handling
+
+### Evaluation Metrics
+
+| Metric | Purpose |
+|---|---|
+| Hit@K | Checks whether relevant evidence appears in the top-K results |
+| MRR@K | Measures how highly the first relevant result is ranked |
+| Answer Keyword Coverage | Estimates coverage of expected answer concepts |
+| Citation Presence | Checks whether answers include source citations |
+| Abstention Rate | Measures fallback behavior |
+| Response Latency | Measures how long responses take |
+| LLM-as-Judge | Optional automated answer-quality estimate |
+
+Automated answer-quality scores are proxies. They do not replace expert clinical review.
+
+### Retrieval Evaluation
+
+Retrieval performance can be measured using a labeled question set.
+
+For each question, the system retrieves the most relevant passages and compares them against expected evidence.
+
+### Answer Evaluation
+
+The generated answer can be assessed for:
+
+- Relevance
+- Factual consistency with retrieved text
+- Completeness
+- Citation support
+- Unsupported claims
+- Clarity
+
+### Run Automated Tests
 
 ```powershell
 python -m pytest -q
+```
+
+### Evaluate Retrieval
+
+```powershell
 python scripts/evaluate.py --retrieval-only
+```
+
+### Evaluate the Full RAG Pipeline
+
+```powershell
 python scripts/evaluate.py
+```
+
+### Optional LLM-as-Judge Evaluation
+
+```powershell
 python scripts/evaluate.py --judge
 ```
 
-The UI's **Evaluation Lab** also runs the included sample questions. The gold question file is `data/eval_nice.json`; this reference set is designed for NICE NG136, so index the correct guideline before running it. Automatic metrics: retrieval Hit@k, MRR@k, answer keyword coverage proxy, abstention, citation presence, latency and optional LLM-as-judge estimates. **No live clinical accuracy figure is claimed until real evaluation is run.**
+### Evaluation Workflow Diagram
 
-The tests use synthetic PDFs and deterministic fake OpenRouter clients, so they validate the software pipeline and endpoint contracts—not clinical correctness or live OpenRouter billing/latency.
+```mermaid
+flowchart TD
+    A["Medical Test Questions"]
+    B["RAG Retrieval"]
+    C["Retrieved Passages"]
+    D["OpenRouter Answers"]
 
-## 5. Technical architecture
+    E["Retrieval Metrics<br/>Hit@K and MRR@K"]
+    F["Answer Evaluation<br/>Quality and Citations"]
+    G["Latency Measurement"]
 
-```text
-Browser: ui/web/index.html + assets/styles.css + assets/app.js
-  | same-origin HTTP/JSON (no npm installation)
-FastAPI: app/api.py
-  | upload / official catalog import
-  v
-PyMuPDF -> 1-based PDF page, section detector, chunking + overlap
-  | OpenRouter POST /api/v1/embeddings
-  v
-SQLite persistent vectors + FTS5 BM25 lexical index
-  | question -> query embedding -> cosine + lexical reciprocal-rank fusion
-  | threshold gate -> context passages
-  v
-OpenRouter POST /api/v1/chat/completions
-  | grounding prompt + whitelisted [S1], [S2], etc
-  v
-Answer + actual indexed source metadata + original PDF #page=N
+    H["Evaluation Results"]
+
+    A --> B
+    B --> C
+    C --> D
+
+    C --> E
+    D --> F
+    D --> G
+
+    E --> H
+    F --> H
+    G --> H
 ```
 
-Important endpoints: `GET /`, `GET /health`, `GET /documents`, `GET /documents/{id}/pdf`, `GET /api/catalog`, `POST /api/catalog/import`, `POST /documents/upload`, `DELETE /documents/{id}`, `POST /chat`, `POST /retrieve`, `GET /api/system`, `POST /api/feedback`, `POST /evaluation/run`.
 
-## 6. Limitations before a public/clinical production launch
 
-This is a functional SaaS-style **engineering prototype**, **not a production-cleared healthcare SaaS**. Before handling real patient data or monetizing, you must add: formally licensed guideline corpus, independent clinical validation, clinical safety escalation policy, robust individual user authentication and RBAC, per-user/organization data separation, secure secret management, HTTPS, rate limiting and abuse prevention, audit logs, monitoring, legal/privacy review, vendor data-processing agreements, retention/deletion policies, and regional regulatory assessment. There is no backend chat-history storage in this version; the browser keeps open conversation state only in memory. Feedback stores only aggregated positive/negative votes, no question text.
+##  Results
 
-Retrieval threshold `MIN_SIMILARITY=0.40` is a **demo starting point, not a calibrated confidence score**. Source-section inference from PDF text can fail for OCR scans, complex tables and columns. Citation IDs confirm only that an indexed passage exists; a generated sentence can still contain an incorrect or unsupported claim. A medically trained reviewer must verify evidence before clinical use.
+### Development Results
+
+During development, the system successfully indexed a real NICE hypertension guideline.
+
+| Metric | Result |
+|---|---|
+| Indexed Guidelines | 1 |
+| Indexed PDF Pages | 57 |
+| Searchable Passages | 108 |
+| Automated Tests | 18 / 18 passed |
+| Backend API | Implemented |
+| Premium Frontend | Implemented |
+| Evidence Citation Support | Implemented |
+| Fallback Handling | Implemented |
+
+### Evaluation Status
+
+| Evaluation Metric | Status |
+|---|---|
+| Automated Pipeline Tests | Passed |
+| Retrieval Hit@K | Live evaluation required |
+| MRR@K | Live evaluation required |
+| Answer Quality | Clinical review required |
+| Average Response Time | Live measurement required |
+| Citation Accuracy | Manual verification required |
+
+The 18 passing tests validate implementation behavior using deterministic test scenarios. They do not prove medical accuracy.
+
+Real retrieval accuracy and response-time values should be reported only after running the evaluation against indexed clinical documents with live model access.
+
+
+##  Future Improvements
+
+The following improvements are planned for future versions.
+
+### Advanced Retrieval
+
+- Dedicated vector database integration
+- Semantic reranking
+- Query expansion
+- Query rewriting
+- Metadata-aware filtering
+- Improved multilingual retrieval
+- Better handling of medical terminology
+
+### Clinical Intelligence
+
+- Clinical expert review workflow
+- Guideline version tracking
+- Source freshness monitoring
+- Automated guideline update detection
+- Medical terminology normalization
+- Better citation-to-claim verification
+
+### SaaS Platform
+
+- User registration and login
+- Role-based access control
+- Organization workspaces
+- Multi-tenant document isolation
+- Usage analytics
+- Subscription management
+- Audit history
+- Administrator dashboard
+
+### Infrastructure
+
+- Docker containerization
+- PostgreSQL integration
+- Background document indexing
+- Task queues
+- CI/CD pipelines
+- Application monitoring
+- Cloud deployment
+- API rate limiting
+
+These are planned improvements, not features currently claimed as implemented.
+
+
+
+##  Troubleshooting
+
+### Problem 1 — `Not Found` at `/`
+
+Make sure the premium FastAPI application is running:
+
+```powershell
+python -m uvicorn app.api:app --reload
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000/
+```
+
+If another application is already using port 8000, launch this project on a different port:
+
+```powershell
+python -m uvicorn app.api:app --reload --port 8001
+```
+
+### Problem 2 PyMuPDF Installation Error
+
+Use the standard Python 3.11 build.
+
+Check installed versions:
+
+```powershell
+py -0p
+```
+
+Create a Python 3.11 environment:
+
+```powershell
+py -3.11 -m venv .venv
+```
+
+Activate it and reinstall the dependencies.
+
+### Problem 3 — Chatbot Cannot Find Relevant Evidence
+
+Check the knowledge base.
+
+If both the document and passage counts are zero, the application has no indexed evidence.
+
+Open **Knowledge Library** and import an authorized clinical guideline.
+
+### Problem 4 — Invalid Administrator API Key
+
+Check the `.env` file:
+
+```dotenv
+ADMIN_API_KEY=your_admin_secret
+```
+
+Restart the backend if the configuration was changed.
+
+Enter the same key in the Administrator Access section of the web interface.
+
+### Problem 5 — OpenRouter Error
+
+Verify that:
+
+- The API key is valid.
+- The selected models are available.
+- Internet access is working.
+- The account has sufficient credits.
+- The configured model names are correct.
+
+### Problem 6 — Unsupported Medical Questions
+
+The system intentionally returns a fallback response when relevant evidence is unavailable.
+
+Index the appropriate clinical guideline or ask a question related to the existing knowledge base.
+
+Do not disable evidence checks merely to force the chatbot to answer.
+
+
+
+##  What I Learned
+
+This project helped me understand how Retrieval-Augmented Generation can be used to build more transparent AI applications.
+
+I gained practical experience with:
+
+- Clinical document processing
+- Embedding generation
+- Vector similarity search
+- Hybrid retrieval
+- OpenRouter integration
+- Prompt grounding
+- Citation handling
+- API development
+- Web frontend integration
+- RAG evaluation
+- Knowledge-base management
+
+It also demonstrated why evidence quality, input validation, and safe fallback behavior matter when building AI systems for sensitive domains such as healthcare.
+
+
+
+##  Conclusion
+
+Veritas Health demonstrates how Retrieval-Augmented Generation can be combined with OpenRouter and clinical guideline documents to build an evidence-based medical question-answering application.
+
+The project integrates PDF processing, text chunking, embeddings, similarity search, hybrid retrieval, grounded answer generation, source citations, and a modern SaaS-style frontend.
+
+By retrieving clinical information before generating a response, the system provides a more transparent approach to medical question answering than a general-purpose chatbot.
+
+The current version is a functional engineering prototype designed for learning, research, and further development. Additional clinical validation, security, licensing, and regulatory work would be required before real-world medical deployment.
+
+
