@@ -154,4 +154,6 @@ class KnowledgeStore:
     def feedback_stats(self) -> dict:
         with self.connect() as db:
             rows = db.execute('SELECT vote, COUNT(*) AS count FROM feedback GROUP BY vote')
-            return {r['vote']: r['count'] for r in rows}
+            stats = {r['vote']: r['count'] for r in rows}
+            stats['not_helpful'] = stats.get('not_helpful', 0)  # Ensure 'not_helpful' is included
+            return stats
