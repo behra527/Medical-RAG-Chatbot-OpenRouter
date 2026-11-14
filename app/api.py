@@ -157,7 +157,7 @@ def import_guideline(request: BootstrapRequest):
         raise HTTPException(503, 'OpenRouter API key not configured in backend .env')
     try:
         content = download_pdf(guid.pdf_url, rag.settings.max_upload_mb * 1024 * 1024)
-        return rag.ingest(content, f'{guid.id}.pdf', title=f'{guid.publisher} — {guid.title} ({guid.year})', source_url=guid.pdf_url)
+        return rag.ingest(content, f'{guid.id}.pdf', title=f'{guid.publisher}  {guid.title} ({guid.year})', source_url=guid.pdf_url)
     except Exception as exc:
         handle_error(exc)
 
